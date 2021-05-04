@@ -1,4 +1,5 @@
 import socket
+import pickle
 
 HOST = "localhost" #socket.gethostbyname(socket.gethostname())
 PORT = 5050
@@ -15,10 +16,10 @@ def send():
         if cmd.lower() == 'quit': 
             client.sendall(b'Client disconnecting')
             break
-        cmd = bytes(cmd.encode(FORMAT))
+        cmd = cmd.encode(FORMAT)
         client.sendall(cmd)
-        cmd = client.recv(2048)
-        print(cmd.decode(FORMAT))
+        msg = client.recv(2048)
+        print(msg.decode(FORMAT))
 
                 
 send()

@@ -1,6 +1,8 @@
 from mysql.connector import connect
+import pickle
 import socket
 from src.Config import Config
+from src.Wallet import Wallet
 import threading
 
 # Constants
@@ -17,17 +19,6 @@ cnx = connect(
     database=Config.DB['database'],
 )
 csr = cnx.cursor(dictionary=True, buffered=True)
-
-# Crypto Wallet Class
-class Wallet:
-    def __init__(self, conn):
-        self.conn = conn
-    
-    def create_account(self):
-        csr.execute('SHOW TABLES')
-        for item in csr: 
-            item = item['Tables_in_omega']
-            self.conn.sendall(bytes(item.encode(FORMAT)))
         
 # Server Socket 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,13 +29,14 @@ def handle_client(conn, addr):
     account = Wallet(conn)
 
     while True:
-        msg = conn.recv(2048).decode(FORMAT)
+        msg = conn.recv(8000).decode(FORMAT)
         if msg:
-            if msg == "quit": break
+            if msg == "quit": 
+                break
             if msg == 'create':
-                print('hello')
-            print(f"[{addr}] {msg}")
-            conn.send("Message received".encode(FORMAT))
+                account.create_account()
+            print(f"[User {addr[1]}] {msg}")
+            conn.send(b'Message Received')
 
     conn.close()
 
