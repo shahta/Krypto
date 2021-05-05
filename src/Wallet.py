@@ -3,20 +3,21 @@ import random
 from src.Config import Config
 import string
 
-cnx = connect(
-    user=Config.DB['user'],
-    password=Config.DB['password'],
-    host=Config.DB['host'],
-    database=Config.DB['database'],
-)
-csr = cnx.cursor(dictionary=True, buffered=True)
+# cnx = connect(
+#     user=Config.DB['user'],
+#     password=Config.DB['password'],
+#     host=Config.DB['host'],
+#     database=Config.DB['database'],
+# )
+# csr = cnx.cursor(dictionary=True, buffered=True)
 
 FORMAT = 'utf-8'
 
 # Crypto Wallet Class
 class Wallet:
-    def __init__(self, conn):
+    def __init__(self, conn, db_conn):
         self.conn = conn
+        self.cnx = db_conn
     
     def create_account(self, customer_info:dict):
         insert_query = "INSERT INTO omega.wallets VALUES ("
@@ -29,6 +30,7 @@ class Wallet:
         insert_query += wallet_address
         
         print(insert_query)
+        csr = self.cnx.cursor()
         csr.execute(insert_query)
 
         success_msg = f"Account created, your bitcoin wallet address is {wallet_address[1:13]}"

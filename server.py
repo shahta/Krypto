@@ -1,3 +1,4 @@
+from mysql.connector import connect
 import pickle
 import socket
 from src.Config import Config
@@ -10,6 +11,12 @@ PORT = 5050
 ADDRESS = (HOST, PORT)
 FORMAT = 'utf-8'
 
+cnx = connect(
+    user=Config.DB['user'],
+    password=Config.DB['password'],
+    host=Config.DB['host'],
+    database=Config.DB['database'],
+)
         
 # Server Socket 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,7 +24,7 @@ s.bind(ADDRESS)
 
 def handle_client(conn, addr):
     print('Connected to', addr)
-    account = Wallet(conn)
+    account = Wallet(conn, cnx)
 
     while True:
         msg = conn.recv(8000).decode(FORMAT)
