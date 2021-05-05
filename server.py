@@ -1,4 +1,3 @@
-from mysql.connector import connect
 import pickle
 import socket
 from src.Config import Config
@@ -11,14 +10,6 @@ PORT = 5050
 ADDRESS = (HOST, PORT)
 FORMAT = 'utf-8'
 
-# MySQL connections
-cnx = connect(
-    user=Config.DB['user'],
-    password=Config.DB['password'],
-    host=Config.DB['host'],
-    database=Config.DB['database'],
-)
-csr = cnx.cursor(dictionary=True, buffered=True)
         
 # Server Socket 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,9 +25,14 @@ def handle_client(conn, addr):
             if msg == "quit": 
                 break
             if msg == 'create':
-                account.create_account()
-            print(f"[User {addr[1]}] {msg}")
-            conn.send(b'Message Received')
+                finished = conn.recv(8000)
+                finished = pickle.loads(finished)
+                if finished:
+                    account.create_account(finished)
+
+            else:   
+                print(f"[User {addr[1]}] {msg}")
+                conn.send(b'Message Received')
 
     conn.close()
 
