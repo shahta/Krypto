@@ -32,10 +32,10 @@ def handle_client(conn, addr):
             if msg == "quit": 
                 break
             if msg == 'create':
-                finished = conn.recv(8000)
-                finished = pickle.loads(finished)
-                if finished:
-                    account.create_account(finished)
+                customer_info = conn.recv(8000)
+                customer_info = pickle.loads(customer_info)
+                if customer_info:
+                    account.create_account(customer_info)
 
             else:   
                 print(f"[User {addr[1]}] {msg}")

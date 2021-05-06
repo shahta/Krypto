@@ -12,12 +12,13 @@ client.connect(ADDRESS)
 def handle_create():
     customer_info = {'first_name': r'', 'last_name': r'', 'email': r"", 'password': r"", 'coins': 0}
 
-    name = input('What is your full name: ')
-    customer_info['first_name'] = name.split()[0]
-    customer_info['last_name'] = name.split()[1]
+    first_name = input('What is your first name: ')
+    customer_info['first_name'] = first_name
+    last_name = input('What is your last name: ')
+    customer_info['last_name'] = last_name
     email = input('What is your email: ')
     customer_info['email'] = email
-    password = input('Please enter a unique password. Must be 10 characters, and contain special characters: ')
+    password = input('Password (must contain at least 10 characters, special character, uppercase): ')
     customer_info['password'] = password
 
     customer_info = pickle.dumps(customer_info)
@@ -33,7 +34,7 @@ def send():
         if cmd.lower() == 'quit': 
             client.sendall(b'Client disconnecting')
             break
-        if cmd.lower() == 'create':
+        if 'create' in cmd.lower():
             client.sendall(b'create')
             handle_create()
         

@@ -29,9 +29,9 @@ class Wallet:
         wallet_address = "'" + str(wallet_address) + "'" + ")"
         insert_query += wallet_address
         
-        print(insert_query)
         csr = self.cnx.cursor()
         csr.execute(insert_query)
+        self.cnx.commit()
 
         success_msg = f"Account created, your bitcoin wallet address is {wallet_address[1:13]}"
         self.conn.send(success_msg.encode(FORMAT))
