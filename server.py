@@ -6,11 +6,12 @@ from src.Wallet import Wallet
 import threading
 
 # Constants
-HOST = "localhost" #socket.gethostbyname(socket.gethostname())
+HOST = "localhost" 
 PORT = 5050
 ADDRESS = (HOST, PORT)
 FORMAT = 'utf-8'
 
+# db connection
 cnx = connect(
     user=Config.DB['user'],
     password=Config.DB['password'],
@@ -36,7 +37,11 @@ def handle_client(conn, addr):
                 customer_info = pickle.loads(customer_info)
                 if customer_info:
                     account.create_account(customer_info)
-
+            if msg == 'balance':
+                credentials = conn.recv(8000)
+                credentials = pickle.loads(credentials)
+                if credentials:
+                    account.check_balance(credentials)
             else:   
                 print(f"[User {addr[1]}] {msg}")
                 conn.send(b'Message Received')
@@ -44,7 +49,7 @@ def handle_client(conn, addr):
     conn.close()
 
 def start():
-    print('Server starting on', HOST.upper())
+    print("Welcome to KRYPTO")
     s.listen()
 
     while True:

@@ -27,6 +27,31 @@ def handle_create():
     finish_msg = client.recv(8000)
     print(finish_msg.decode(FORMAT))
 
+def handle_balance():
+    credentials = {'user': '', 'pass': '', 'wallet': '', 'deposit': 0}
+
+    user_name = input('Username (email): ')
+    password = input('Passsword: ')
+    wallet_id = input('Wallet Address: ')
+    credentials['user'] = user_name
+    credentials['pass'] = password
+    credentials['wallet'] = wallet_id
+
+    deposit = input('Would you like to make a deposit today? (y/N) ')
+    if deposit.lower() == 'y':
+        invalid = True
+        coins = 0
+        while invalid:
+            coins = input('How many bitcoins would you like to deposit (must be more than 0): ')
+            if float(coins) > 0:
+                credentials['deposit'] = coins
+                invalid = False
+    
+    credentials = pickle.dumps(credentials)
+    client.send(credentials)
+
+    finish_msg = client.recv(8000)
+    print(finish_msg.decode(FORMAT))
 
 def send():
     while True:
@@ -37,7 +62,9 @@ def send():
         if 'create' in cmd.lower():
             client.sendall(b'create')
             handle_create()
-        
+        if 'balance' in cmd.lower() or 'deposit' in cmd.lower():
+            client.sendall(b'balance')
+            handle_balance()       
         else:
             # sending what client wants
             cmd = cmd.encode(FORMAT)
