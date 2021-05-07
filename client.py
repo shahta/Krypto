@@ -10,7 +10,7 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDRESS)
 
 def handle_create():
-    customer_info = {'first_name': r'', 'last_name': r'', 'email': r"", 'password': r"", 'coins': 0}
+    customer_info = {'first_name': r'', 'last_name': r'', 'email': r"", 'password': r"", 'coins': 0.0}
 
     first_name = input('What is your first name: ')
     customer_info['first_name'] = first_name
@@ -28,7 +28,36 @@ def handle_create():
     print(finish_msg.decode(FORMAT))
 
 def handle_balance():
-    credentials = {'user': '', 'pass': '', 'wallet': '', 'deposit': 0}
+    credentials = __log_in()
+
+    credentials = pickle.dumps(credentials)
+    client.send(credentials)
+
+    finish_msg = client.recv(8000)
+    print(finish_msg.decode(FORMAT))
+
+def handle_deposit():
+    credentials = __log_in()
+
+    invalid = True
+    coins = 0
+    while invalid:
+        coins = input('How many bitcoins would you like to deposit (must be more than 0): ')
+        if float(coins) > 0:
+            credentials['deposit'] = coins
+            invalid = False
+    
+    credentials = pickle.dumps(credentials)
+    client.send(credentials)
+
+    finish_msg = client.recv(8000)
+    print(finish_msg.decode(FORMAT))
+
+def handle_transfer():
+    pass
+
+def __log_in():
+    credentials = {'user': '', 'pass': '', 'wallet': ''}
 
     user_name = input('Username (email): ')
     password = input('Passsword: ')
@@ -37,21 +66,7 @@ def handle_balance():
     credentials['pass'] = password
     credentials['wallet'] = wallet_id
 
-    deposit = input('Would you like to make a deposit today? (y/N) ')
-    if deposit.lower() == 'y':
-        invalid = True
-        coins = 0
-        while invalid:
-            coins = input('How many bitcoins would you like to deposit (must be more than 0): ')
-            if float(coins) > 0:
-                credentials['deposit'] = coins
-                invalid = False
-    
-    credentials = pickle.dumps(credentials)
-    client.send(credentials)
-
-    finish_msg = client.recv(8000)
-    print(finish_msg.decode(FORMAT))
+    return credentials
 
 def send():
     while True:
@@ -62,9 +77,15 @@ def send():
         if 'create' in cmd.lower():
             client.sendall(b'create')
             handle_create()
-        if 'balance' in cmd.lower() or 'deposit' in cmd.lower():
+        if 'transfer' in cmd.lower():
+            client.sendall(b'transfer')
+            handle_transfer()
+        if 'balance' in cmd.lower():
             client.sendall(b'balance')
             handle_balance()       
+        if 'deposit' in cmd.lower():
+            client.sendall(b'deposit')
+            handle_deposit()       
         else:
             # sending what client wants
             cmd = cmd.encode(FORMAT)

@@ -30,6 +30,7 @@ def handle_client(conn, addr):
     while True:
         msg = conn.recv(8000).decode(FORMAT)
         if msg:
+            msg = msg.lower()
             if msg == "quit": 
                 break
             if msg == 'create':
@@ -42,6 +43,11 @@ def handle_client(conn, addr):
                 credentials = pickle.loads(credentials)
                 if credentials:
                     account.check_balance(credentials)
+            if msg == 'deposit':
+                credentials = conn.recv(8000)
+                credentials = pickle.loads(credentials)
+                if credentials:
+                    account.deposit(credentials)
             else:   
                 print(f"[User {addr[1]}] {msg}")
                 conn.send(b'Message Received')
@@ -49,7 +55,7 @@ def handle_client(conn, addr):
     conn.close()
 
 def start():
-    print("Welcome to KRYPTO")
+    print(f"Server starting on {HOST}")
     s.listen()
 
     while True:

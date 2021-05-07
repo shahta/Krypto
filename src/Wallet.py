@@ -23,7 +23,7 @@ class Wallet:
         csr.execute(insert_query)
         self.cnx.commit()
 
-        success_msg = f"Account created, your bitcoin wallet address is {wallet_address[1:13]}"
+        success_msg = f"[ACCOUNT] Account created, your bitcoin wallet address is {wallet_address[1:13]}"
         self.conn.send(success_msg.encode(FORMAT))
     
     def __unique_wallet_address(self):
@@ -44,7 +44,6 @@ class Wallet:
         email = credentials['user']
         password = credentials['pass']
         address = credentials['wallet']
-        deposit = credentials['deposit']
 
 
         query = f"SELECT Coins FROM omega.wallets WHERE Email = '{email}' AND EncPassword = '{password}' AND WalletAddress = '{address}'"
@@ -52,24 +51,22 @@ class Wallet:
         csr.execute(query)
 
         balance = csr.fetchone()[0]
-        msg_sent = False
-
-        if deposit:
-            self.__deposit_coins(address, password, balance, deposit)
-            msg_sent = True
         
-        if not msg_sent:
-            success_msg = f"The balance for the wallet address {address} is {balance}"
-            self.conn.send(success_msg.encode(FORMAT))
+        success_msg = f"[BALANCE] The balance for the wallet address {address} is {balance}"
+        self.conn.send(success_msg.encode(FORMAT))
 
-    def __deposit_coins(self, address, password, current_amount, coins):
-        coins = float(coins) + float(current_amount)
-        update_query = f"UPDATE omega.wallets SET Coins = '{coins}' WHERE WalletAddress = '{address}' AND EncPassword = '{password}'"
+    def deposit(self, credentials):
+        email = credentials['user']
+        password = credentials['pass']
+        address = credentials['wallet']
+        coins = credentials['deposit']
+        
+        update_query = f"UPDATE omega.wallets SET Coins = Coins + {coins} WHERE WalletAddress = '{address}' AND EncPassword = '{password}'"
         csr = self.cnx.cursor()
         csr.execute(update_query)
         self.cnx.commit()
         
-        success_msg = f"Your new balance for the wallet address {address} is {coins}"
+        success_msg = f"[DEPOSIT] Your balance has been updated!"
         self.conn.send(success_msg.encode(FORMAT))
         
         
