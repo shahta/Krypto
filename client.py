@@ -54,11 +54,23 @@ def handle_deposit():
     print(finish_msg.decode(FORMAT))
 
 def handle_transfer():
-    pass
+    credentials = __log_in()
+
+    amount = input('How many coins would you like to transfer: ')
+    email = input('What is the email of the recipient: ')
+    address = input('What is the bitcoin wallet address of the recipient: ')
+    transfer_info = {'amount': float(amount), 'email': email, 'address': address}
+
+    client.send(pickle.dumps(credentials))
+    client.send(pickle.dumps(transfer_info))
+
+    finish_msg = client.recv(8000)
+    print(finish_msg.decode(FORMAT))
 
 def __log_in():
     credentials = {'user': '', 'pass': '', 'wallet': ''}
 
+    print('[ACCOUNT] Please log in to you account')
     user_name = input('Username (email): ')
     password = input('Passsword: ')
     wallet_id = input('Wallet Address: ')

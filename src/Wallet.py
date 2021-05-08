@@ -69,4 +69,30 @@ class Wallet:
         success_msg = f"[DEPOSIT] Your balance has been updated!"
         self.conn.send(success_msg.encode(FORMAT))
         
+    def transfer(self, credentials, transfer_info):
+        check_balance = f"SELECT Coins from wallets WHERE Email = '{credentials['user']}' AND WalletAddress = '{credentials['wallet']}'"
+        csr = self.cnx.cursor()
+        csr.execute(check_balance)
+
+        current_coins = float(csr.fetchone()[0])
+
+        new_balance = float('inf')
+        if current_coins - transfer_info['amount'] < 0:
+            new_balance = 0
+        else:
+            new_balance = current_coins - transfer_info['amount']
+
+        update_sender = f"""UPDATE wallets SET Coins = {new_balance} 
+                            WHERE Email = '{credentials['user']}' AND WalletAddress = '{credentials['wallet']}'"""
         
+        update_receiver = f"""UPDATE wallets 
+                            SET Coins = Coins + {transfer_info['amount']} 
+                            WHERE Email = '{transfer_info['email']}' AND WalletAddress = '{transfer_info['address']}'"""
+
+        csr.execute(update_receiver)
+        self.cnx.commit()
+        csr.execute(update_sender)
+        self.cnx.commit()
+        success_message = f"[TRANSFER] {transfer_info['amount']} coins sent to {transfer_info['email']}, your new balance is {new_balance}"
+        self.conn.send(success_message.encode(FORMAT))
+

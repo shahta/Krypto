@@ -48,6 +48,13 @@ def handle_client(conn, addr):
                 credentials = pickle.loads(credentials)
                 if credentials:
                     account.deposit(credentials)
+            if msg == 'transfer':
+                credentials = conn.recv(8000)
+                credentials = pickle.loads(credentials)
+                transfer_info = conn.recv(8000)
+                transfer_info = pickle.loads(transfer_info)
+                if credentials and transfer_info:
+                    account.transfer(credentials, transfer_info)
             else:   
                 print(f"[User {addr[1]}] {msg}")
                 conn.send(b'Message Received')
