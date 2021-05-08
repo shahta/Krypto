@@ -9,6 +9,27 @@ FORMAT = 'utf-8'
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDRESS)
 
+
+def log_in():
+    credentials = {'user': '', 'pass': '', 'wallet': ''}
+
+    print('[ACCOUNT] Please log in to you account')
+    user_name = input('Username (email): ')
+    password = input('Passsword: ')
+    wallet_id = input('Wallet Address: ')
+    credentials['user'] = user_name
+    credentials['pass'] = password
+    credentials['wallet'] = wallet_id
+
+    client.send(pickle.dumps(credentials))
+    success_msg = client.recv(8000).decode(FORMAT)
+    if 'Logged in' in success_msg:
+        print(success_msg)
+        return True
+    else:
+        print('[ACCOUNT] Log in failed')
+        return False
+
 def handle_create():
     customer_info = {'first_name': r'', 'last_name': r'', 'email': r"", 'password': r"", 'coins': 0.0}
 
@@ -28,74 +49,55 @@ def handle_create():
     print(finish_msg.decode(FORMAT))
 
 def handle_balance():
-    credentials = __log_in()
-
-    credentials = pickle.dumps(credentials)
-    client.send(credentials)
-
+    
     finish_msg = client.recv(8000)
     print(finish_msg.decode(FORMAT))
 
 def handle_deposit():
-    credentials = __log_in()
-
     invalid = True
     coins = 0
     while invalid:
-        coins = input('How many bitcoins would you like to deposit (must be more than 0): ')
+        coins = (input('How many bitcoins would you like to deposit (must be more than 0): '))
         if float(coins) > 0:
-            credentials['deposit'] = coins
             invalid = False
-    
-    credentials = pickle.dumps(credentials)
-    client.send(credentials)
+
+    client.send(coins.encode(FORMAT))
 
     finish_msg = client.recv(8000)
     print(finish_msg.decode(FORMAT))
 
 def handle_transfer():
-    credentials = __log_in()
-
     amount = input('How many coins would you like to transfer: ')
     email = input('What is the email of the recipient: ')
     address = input('What is the bitcoin wallet address of the recipient: ')
     transfer_info = {'amount': float(amount), 'email': email, 'address': address}
 
-    client.send(pickle.dumps(credentials))
     client.send(pickle.dumps(transfer_info))
 
     finish_msg = client.recv(8000)
     print(finish_msg.decode(FORMAT))
 
-def __log_in():
-    credentials = {'user': '', 'pass': '', 'wallet': ''}
-
-    print('[ACCOUNT] Please log in to you account')
-    user_name = input('Username (email): ')
-    password = input('Passsword: ')
-    wallet_id = input('Wallet Address: ')
-    credentials['user'] = user_name
-    credentials['pass'] = password
-    credentials['wallet'] = wallet_id
-
-    return credentials
-
 def send():
+    logged_in = False
     while True:
-        cmd = input('How can I help you today? ')
-        if cmd.lower() == 'quit': 
+        cmd = input('How can I help you today? ').lower()
+        if cmd == 'quit' or cmd == 'log off': 
             client.sendall(b'Client disconnecting')
             break
-        if 'create' in cmd.lower():
+        if 'create' in cmd:
             client.sendall(b'create')
             handle_create()
-        if 'transfer' in cmd.lower():
+        if not logged_in:
+            client.sendall(b'log in')
+            log_success = log_in()
+            if log_success: logged_in = True
+        if 'transfer' in cmd:
             client.sendall(b'transfer')
             handle_transfer()
-        if 'balance' in cmd.lower():
+        if 'balance' in cmd:
             client.sendall(b'balance')
             handle_balance()       
-        if 'deposit' in cmd.lower():
+        if 'deposit' in cmd:
             client.sendall(b'deposit')
             handle_deposit()       
         else:

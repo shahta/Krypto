@@ -8,6 +8,7 @@ class Wallet:
     def __init__(self, conn, db_conn):
         self.conn = conn
         self.cnx = db_conn
+        self.credentials = {}
     
     def create_account(self, customer_info:dict):
         insert_query = "INSERT INTO omega.wallets VALUES ("
@@ -40,10 +41,25 @@ class Wallet:
         
         return address
     
-    def check_balance(self, credentials:dict):
-        email = credentials['user']
-        password = credentials['pass']
-        address = credentials['wallet']
+    def log_in(self, credentials:dict):
+        self.credentials = credentials
+
+        email = self.credentials['user']
+        password = self.credentials['pass']
+        address = self.credentials['wallet']
+
+        query = f"""SELECT FirstName FROM wallets
+                    WHERE Email = '{email}' AND EncPassword = '{password}' AND WalletAddress = '{address}'"""
+        csr = self.cnx.cursor()
+        csr.execute(query)
+        name = csr.fetchone()[0]
+        log_in_msg = f"[ACCOUNT] Logged in, welcome to your Krypto account {name}!"
+        self.conn.send(log_in_msg.encode(FORMAT))
+    
+    def check_balance(self):
+        email = self.credentials['user']
+        password = self.credentials['pass']
+        address = self.credentials['wallet']
 
 
         query = f"SELECT Coins FROM omega.wallets WHERE Email = '{email}' AND EncPassword = '{password}' AND WalletAddress = '{address}'"
@@ -55,11 +71,9 @@ class Wallet:
         success_msg = f"[BALANCE] The balance for the wallet address {address} is {balance}"
         self.conn.send(success_msg.encode(FORMAT))
 
-    def deposit(self, credentials):
-        email = credentials['user']
-        password = credentials['pass']
-        address = credentials['wallet']
-        coins = credentials['deposit']
+    def deposit(self, coins:float):
+        password = self.credentials['pass']
+        address = self.credentials['wallet']
         
         update_query = f"UPDATE omega.wallets SET Coins = Coins + {coins} WHERE WalletAddress = '{address}' AND EncPassword = '{password}'"
         csr = self.cnx.cursor()
@@ -69,24 +83,29 @@ class Wallet:
         success_msg = f"[DEPOSIT] Your balance has been updated!"
         self.conn.send(success_msg.encode(FORMAT))
         
-    def transfer(self, credentials, transfer_info):
-        check_balance = f"SELECT Coins from wallets WHERE Email = '{credentials['user']}' AND WalletAddress = '{credentials['wallet']}'"
+    def transfer(self, transfer_info):
+        email = self.credentials['user']
+        address = self.credentials['wallet']
+        
+        check_balance = f"SELECT Coins from wallets WHERE Email = '{email}' AND WalletAddress = '{address}'"
         csr = self.cnx.cursor()
         csr.execute(check_balance)
 
         current_coins = float(csr.fetchone()[0])
+        transfer_amount = float(transfer_info['amount'])
 
         new_balance = float('inf')
-        if current_coins - transfer_info['amount'] < 0:
+        if current_coins - transfer_amount < 0:
             new_balance = 0
+            transfer_amount = current_coins
         else:
-            new_balance = current_coins - transfer_info['amount']
+            new_balance = current_coins - transfer_amount
 
         update_sender = f"""UPDATE wallets SET Coins = {new_balance} 
-                            WHERE Email = '{credentials['user']}' AND WalletAddress = '{credentials['wallet']}'"""
+                            WHERE Email = '{email}' AND WalletAddress = '{address}'"""
         
         update_receiver = f"""UPDATE wallets 
-                            SET Coins = Coins + {transfer_info['amount']} 
+                            SET Coins = Coins + {transfer_amount} 
                             WHERE Email = '{transfer_info['email']}' AND WalletAddress = '{transfer_info['address']}'"""
 
         csr.execute(update_receiver)

@@ -30,31 +30,29 @@ def handle_client(conn, addr):
     while True:
         msg = conn.recv(8000).decode(FORMAT)
         if msg:
-            msg = msg.lower()
-            if msg == "quit": 
+            if msg == "quit" or msg == 'log off': 
                 break
+            if msg == 'log in':
+                credentials = conn.recv(8000)
+                credentials = pickle.loads(credentials)
+                if credentials:
+                    account.log_in(credentials)
             if msg == 'create':
                 customer_info = conn.recv(8000)
                 customer_info = pickle.loads(customer_info)
                 if customer_info:
                     account.create_account(customer_info)
             if msg == 'balance':
-                credentials = conn.recv(8000)
-                credentials = pickle.loads(credentials)
-                if credentials:
-                    account.check_balance(credentials)
+                account.check_balance()
             if msg == 'deposit':
-                credentials = conn.recv(8000)
-                credentials = pickle.loads(credentials)
-                if credentials:
-                    account.deposit(credentials)
+                coins = conn.recv(8000).decode(FORMAT)
+                if coins:
+                    account.deposit(float(coins))
             if msg == 'transfer':
-                credentials = conn.recv(8000)
-                credentials = pickle.loads(credentials)
                 transfer_info = conn.recv(8000)
                 transfer_info = pickle.loads(transfer_info)
-                if credentials and transfer_info:
-                    account.transfer(credentials, transfer_info)
+                if transfer_info:
+                    account.transfer(transfer_info)
             else:   
                 print(f"[User {addr[1]}] {msg}")
                 conn.send(b'Message Received')
